@@ -10,7 +10,7 @@ func NewCoordinator(ents int) *Coordinator {
 	return &Coordinator{
 		em: NewEntityManager(ents),
 		sm: NewSystemManager(),
-		cm: NewComponentManager(),
+		cm: newComponentManager(),
 	}
 }
 
@@ -20,29 +20,29 @@ func CreateNewEntity(coord *Coordinator) Entity {
 
 func EraseEntity(coord *Coordinator, entity Entity) {
 	coord.em.DestroyEntity(entity)
-	EntityDestroyed(coord.cm, entity)
+	entityDestroyed(coord.cm, entity)
 	coord.sm.EntityDestroyed(entity)
 }
 
 func RegisterNewComponentType[T any](coord *Coordinator) {
-	RegisterComponent[T](coord.cm)
+	registerComponent[T](coord.cm)
 }
 
 func AddNewComponent[T any](coord *Coordinator, entity Entity, comp T) {
-	AddComponent[T](coord.cm, entity, comp)
+	addComponent(coord.cm, entity, comp)
 
 	sig := coord.em.GetSignature(entity) //
-	sig.Set(int(GetComponentType[T](coord.cm)), true)
+	sig.Set(int(getComponentType[T](coord.cm)), true)
 	coord.em.SetSignature(entity, sig)
 
 	coord.sm.EntitySignatureChanged(entity, sig)
 }
 
 func RemoveExistingComponent[T any](coord *Coordinator, entity Entity) {
-	RemoveComponent(coord.cm, entity)
+	removeComponent[T](coord.cm, entity)
 
 	sig := coord.em.GetSignature(entity) //
-	sig.Set(int(GetComponentType[T](coord.cm)), false)
+	sig.Set(int(getComponentType[T](coord.cm)), false)
 	coord.em.SetSignature(entity, sig)
 
 	coord.sm.EntitySignatureChanged(entity, sig)
@@ -50,17 +50,22 @@ func RemoveExistingComponent[T any](coord *Coordinator, entity Entity) {
 
 func GetExistingComponent[T any](coord *Coordinator, entity Entity) *T {
 
-	c, err := GetComponent[T](coord.cm, entity)
+	c, err := getComponent[T](coord.cm, entity)
 	if err != nil {
 		return nil
 	}
 
-	return &c
+	return c
 }
 
 func RegisterNewSystem(coord *Coordinator, system System) {
 	coord.sm.RegisterSystem(system)
 }
+
 func SetSystemSignature(coord *Coordinator, system System, sig DumbSignature) {
 	coord.sm.SetSignature(system, sig)
+}
+
+func GetComponentType[T any](coord *Coordinator) ComponentType {
+	return getComponentType[T](coord.cm)
 }

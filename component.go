@@ -20,7 +20,7 @@ type ComponentArray[T any] struct {
 
 func NewComponentArray[T any](maxEntities int) *ComponentArray[T] {
 	return &ComponentArray[T]{
-		Components:    make([]T, maxEntities),
+		Components:    make([]T, 0, maxEntities),
 		EntityToIndex: map[Entity]int{},
 		IndexToEntity: map[int]Entity{},
 		size:          0,
@@ -28,9 +28,17 @@ func NewComponentArray[T any](maxEntities int) *ComponentArray[T] {
 }
 
 func (ca *ComponentArray[T]) Insert(entity Entity, component T) {
-	ca.Components = append(ca.Components, component)
-	ca.IndexToEntity[ca.size] = entity
-	ca.EntityToIndex[entity] = ca.size
+
+	if ca.size < len(ca.Components) {
+		ca.Components[ca.size] = component
+		ca.EntityToIndex[entity] = ca.size
+		ca.IndexToEntity[ca.size] = entity
+
+	} else {
+		ca.Components = append(ca.Components, component)
+		ca.IndexToEntity[ca.size] = entity
+		ca.EntityToIndex[entity] = ca.size
+	}
 
 	ca.size++
 }
@@ -54,13 +62,13 @@ func (ca *ComponentArray[T]) remove(entity Entity) {
 	ca.size--
 }
 
-func (ca *ComponentArray[T]) Get(entity Entity) (T, bool) {
+func (ca *ComponentArray[T]) Get(entity Entity) (*T, bool) {
 	i, ok := ca.EntityToIndex[entity]
 	if ok {
-		return ca.Components[i], true
+		return &ca.Components[i], true
 	}
 	var a T
-	return a, false
+	return &a, false
 
 }
 
@@ -79,7 +87,7 @@ type ComponentManager struct {
 	nextComponentType ComponentType
 }
 
-func NewComponentManager() *ComponentManager {
+func newComponentManager() *ComponentManager {
 	return &ComponentManager{
 		componentTypes:    make(map[string]ComponentType),
 		componentArrays:   make(map[string]IComponentArray),
@@ -87,7 +95,7 @@ func NewComponentManager() *ComponentManager {
 	}
 }
 
-func RegisterComponent[T any](cm *ComponentManager) {
+func registerComponent[T any](cm *ComponentManager) {
 	t := reflect.TypeOf((*T)(nil)).Elem()
 	name := t.Name()
 
@@ -104,14 +112,14 @@ func RegisterComponent[T any](cm *ComponentManager) {
 	cm.nextComponentType++
 }
 
-func GetComponentType[T any](cm *ComponentManager) ComponentType {
+func getComponentType[T any](cm *ComponentManager) ComponentType {
 	t := reflect.TypeOf((*T)(nil)).Elem()
 	name := t.Name()
 
 	return cm.componentTypes[name]
 }
 
-func AddComponent[T any](cm *ComponentManager, entity Entity, component T) {
+func addComponent[T any](cm *ComponentManager, entity Entity, component T) {
 	t := reflect.TypeOf((*T)(nil)).Elem()
 	name := t.Name()
 
@@ -120,7 +128,7 @@ func AddComponent[T any](cm *ComponentManager, entity Entity, component T) {
 
 }
 
-func RemoveComponent[T any](cm *ComponentManager, entity Entity) {
+func removeComponent[T any](cm *ComponentManager, entity Entity) {
 	t := reflect.TypeOf((*T)(nil)).Elem()
 	name := t.Name()
 
@@ -129,7 +137,7 @@ func RemoveComponent[T any](cm *ComponentManager, entity Entity) {
 
 }
 
-func GetComponent[T any](cm *ComponentManager, entity Entity) (T, error) {
+func getComponent[T any](cm *ComponentManager, entity Entity) (*T, error) {
 	t := reflect.TypeOf((*T)(nil)).Elem()
 	name := t.Name()
 
@@ -140,10 +148,10 @@ func GetComponent[T any](cm *ComponentManager, entity Entity) (T, error) {
 	}
 
 	var a T
-	return a, fmt.Errorf("could not find Component of type %v for Entity %v", name, entity)
+	return &a, fmt.Errorf("could not find Component of type %v for Entity %v", name, entity)
 }
 
-func EntityDestroyed(cm *ComponentManager, entity Entity) {
+func entityDestroyed(cm *ComponentManager, entity Entity) {
 	for _, compArray := range cm.componentArrays {
 		compArray.EntityDestroyed(entity)
 	}

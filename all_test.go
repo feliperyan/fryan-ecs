@@ -1,6 +1,7 @@
 package ecs_cpp_style
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -11,7 +12,30 @@ type DummySystemA struct {
 func (dsa *DummySystemA) AddEntity(entity Entity) {
 	dsa.Entities = append(dsa.Entities, entity)
 }
+
 func (dsa *DummySystemA) RemoveEntity(entity Entity) {
+	pos := -1
+	for i, ent := range dsa.Entities {
+		if ent == entity {
+			pos = i
+			break
+		}
+	}
+	if pos >= 0 {
+		dsa.Entities[pos] = dsa.Entities[len(dsa.Entities)-1]
+		dsa.Entities = dsa.Entities[:len(dsa.Entities)-1]
+	}
+}
+
+type DummySystemB struct {
+	Entities []Entity
+}
+
+func (dsa *DummySystemB) AddEntity(entity Entity) {
+	dsa.Entities = append(dsa.Entities, entity)
+}
+
+func (dsa *DummySystemB) RemoveEntity(entity Entity) {
 	pos := -1
 	for i, ent := range dsa.Entities {
 		if ent == entity {
@@ -43,7 +67,6 @@ func TestDumbSignature(t *testing.T) {
 	if r3 {
 		t.Fatalf("Should both be false, got: %v", r3)
 	}
-
 }
 
 func TestQueue(t *testing.T) {
@@ -67,7 +90,6 @@ func TestQueue(t *testing.T) {
 	if b != 1 || !bOk {
 		t.Fatalf("Wanted b == 1 and ok = true | Got %v and %v", b, bOk)
 	}
-
 }
 
 func TestEntityManager(t *testing.T) {
@@ -114,7 +136,6 @@ func TestEntityManager(t *testing.T) {
 	if _sig[0] != false {
 		t.Fatal("Wanted resetted sig false | got true")
 	}
-
 }
 
 func TestComponentArray(t *testing.T) {
@@ -126,18 +147,19 @@ func TestComponentArray(t *testing.T) {
 	ca.Insert(Entity(3), "D")
 
 	e, _ := ca.Get(Entity(1))
-	if e != "B" {
-		t.Fatalf(`Expected e = "one" | Got e = %v"`, e)
+	v := *e
+
+	if v != "B" {
+		t.Fatalf(`Expected e = "B" | Got v = %v `, v)
 	}
 
-	ca.EntityDestroyed(Entity(1))
-	ca.EntityDestroyed(Entity(3))
-	ca.Insert(Entity(4), "E")
+	ca.EntityDestroyed(Entity(1)) // ADC ; A0, D3, C2
+	ca.EntityDestroyed(Entity(3)) // AC; A0, C2
+	ca.Insert(Entity(4), "E")     // ACE, A0, C2, E4
 
 	if ca.Components[0] != "A" || ca.Components[1] != "C" || ca.Components[2] != "E" {
 		t.Fatalf("Got wrong components, expected [A, C, E] | got %v", ca.Components[:ca.size])
 	}
-
 }
 
 func TestComponentManager(t *testing.T) {
@@ -152,12 +174,12 @@ func TestComponentManager(t *testing.T) {
 
 	compA := DummyComponentA{SomeVal: "component A"}
 
-	cm := NewComponentManager()
+	cm := newComponentManager()
 
-	RegisterComponent[DummyComponentA](cm)
-	RegisterComponent[DummyComponentB](cm)
+	registerComponent[DummyComponentA](cm)
+	registerComponent[DummyComponentB](cm)
 
-	tp := GetComponentType[DummyComponentB](cm)
+	tp := getComponentType[DummyComponentB](cm)
 
 	if tp != 1 {
 		t.Fatalf("Wanted 1, got %v", tp)
@@ -165,16 +187,16 @@ func TestComponentManager(t *testing.T) {
 
 	entManager := NewEntityManager(3)
 	entCompA := entManager.CreateEntity()
-	AddComponent[DummyComponentA](cm, entCompA, compA)
+	addComponent[DummyComponentA](cm, entCompA, compA)
 
-	sameA, _ := GetComponent[DummyComponentA](cm, entCompA)
+	sameA, _ := getComponent[DummyComponentA](cm, entCompA)
 
 	if sameA.SomeVal != "component A" {
 		t.Fatalf("wanted component A | got %v", sameA.SomeVal)
 	}
 
-	RemoveComponent[DummyComponentA](cm, entCompA)
-	sameA, ok := GetComponent[DummyComponentA](cm, entCompA)
+	removeComponent[DummyComponentA](cm, entCompA)
+	sameA, ok := getComponent[DummyComponentA](cm, entCompA)
 	if ok == nil {
 		t.Fatalf("expected error indicating component had already been removed for Entity %v", entCompA)
 	}
@@ -191,21 +213,21 @@ func TestComponentManagerEntityDestroy(t *testing.T) {
 	compA := DummyComponentA{SomeVal: "component A"}
 	compB := DummyComponentB{SomeOtherVal: "component B"}
 
-	cm := NewComponentManager()
+	cm := newComponentManager()
 	entManager := NewEntityManager(3)
 
 	ent := entManager.CreateEntity()
 
-	RegisterComponent[DummyComponentA](cm)
-	RegisterComponent[DummyComponentB](cm)
+	registerComponent[DummyComponentA](cm)
+	registerComponent[DummyComponentB](cm)
 
-	AddComponent[DummyComponentA](cm, ent, compA)
-	AddComponent[DummyComponentB](cm, ent, compB)
+	addComponent[DummyComponentA](cm, ent, compA)
+	addComponent[DummyComponentB](cm, ent, compB)
 
-	EntityDestroyed(cm, ent)
+	entityDestroyed(cm, ent)
 
-	_, okA := GetComponent[DummyComponentA](cm, ent)
-	_, okB := GetComponent[DummyComponentB](cm, ent)
+	_, okA := getComponent[DummyComponentA](cm, ent)
+	_, okB := getComponent[DummyComponentB](cm, ent)
 	if okA == nil || okB == nil {
 		t.Fatalf("expected error indicating component had already been removed for Entity %v", ent)
 	}
@@ -217,24 +239,23 @@ func TestNewSystemManager(t *testing.T) {
 
 	sys := &DummySystemA{}
 	sm.RegisterSystem(sys)
-
 }
 
 func TestComprehensive(t *testing.T) {
 	em := NewEntityManager(1000)
-	cm := NewComponentManager()
+	cm := newComponentManager()
 	sm := NewSystemManager()
 
 	ent1 := em.CreateEntity()
 
-	RegisterComponent[Transform](cm)
-	RegisterComponent[Vec2](cm)
+	registerComponent[Transform](cm)
+	registerComponent[Vec2](cm)
 
 	sys := DummySystemA{Entities: make([]Entity, 0)}
 	sm.RegisterSystem(&sys)
 	sysSig := make(DumbSignature, MAX_COMPONENTS)
-	sysSig.Set(int(GetComponentType[Transform](cm)), true)
-	sysSig.Set(int(GetComponentType[Vec2](cm)), true)
+	sysSig.Set(int(getComponentType[Transform](cm)), true)
+	sysSig.Set(int(getComponentType[Vec2](cm)), true)
 
 	sm.SetSignature(&sys, sysSig)
 
@@ -247,14 +268,69 @@ func TestComprehensive(t *testing.T) {
 		Y: 1,
 	}
 
-	AddComponent[Transform](cm, ent1, transf)
-	AddComponent[Vec2](cm, ent1, vec)
+	addComponent(cm, ent1, transf)
+	addComponent(cm, ent1, vec)
 
 	sig := em.GetSignature(ent1)
-	sig.Set(int(GetComponentType[Transform](cm)), true)
-	sig.Set(int(GetComponentType[Vec2](cm)), true)
+	sig.Set(int(getComponentType[Transform](cm)), true)
+	sig.Set(int(getComponentType[Vec2](cm)), true)
 
 	em.SetSignature(ent1, sig)
 	sm.EntitySignatureChanged(ent1, sig)
+}
 
+func TestNewCoordinator(t *testing.T) {
+
+	coord := NewCoordinator(100)
+
+	// Register all components
+	RegisterNewComponentType[Transform](coord)
+	RegisterNewComponentType[Vec2](coord)
+
+	sys1 := DummySystemA{Entities: make([]Entity, 0)}
+	sys2 := DummySystemB{Entities: make([]Entity, 0)}
+	RegisterNewSystem(coord, &sys1)
+	RegisterNewSystem(coord, &sys2)
+
+	sys1Sig := make(DumbSignature, MAX_COMPONENTS)
+	sys1Sig.Set(int(GetComponentType[Transform](coord)), true)
+	sys1Sig.Set(int(GetComponentType[Vec2](coord)), true)
+	SetSystemSignature(coord, &sys1, sys1Sig)
+
+	sys2Sig := make(DumbSignature, MAX_COMPONENTS)
+	sys2Sig.Set(int(GetComponentType[Vec2](coord)), true)
+	SetSystemSignature(coord, &sys2, sys2Sig)
+
+	ent1 := CreateNewEntity(coord)
+	ent2 := CreateNewEntity(coord)
+
+	transf := Transform{
+		position: Vec2{X: 10, Y: 10},
+		scale:    Vec2{X: 1, Y: 1},
+	}
+	vec := Vec2{
+		X: 1,
+		Y: 1,
+	}
+	AddNewComponent(coord, ent1, transf)
+	AddNewComponent(coord, ent1, vec)
+
+	AddNewComponent(coord, ent2, vec)
+
+	for ent := range sys1.Entities {
+		trans := GetExistingComponent[Transform](coord, Entity(ent))
+		vec := GetExistingComponent[Vec2](coord, Entity(ent))
+
+		fmt.Println("trans ", trans, " vec ", vec)
+	}
+
+	transArray := coord.cm.componentArrays["Transform"].(*ComponentArray[Transform])
+	for ent := range sys1.Entities {
+		idx := transArray.EntityToIndex[Entity(ent)]
+
+		result := transArray.Components[idx]
+		fmt.Println("trans ", result)
+	}
+
+	fmt.Println(coord)
 }

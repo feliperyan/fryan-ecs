@@ -36,7 +36,9 @@ func (em *EntityManager) CreateEntity() Entity {
 	em.entityCount++
 
 	ent, ok := em.availableEntities.dequeue()
-	fmt.Println(ok)
+	if !ok {
+		fmt.Println("create entities failed to deque a new one")
+	}
 	return ent
 }
 
