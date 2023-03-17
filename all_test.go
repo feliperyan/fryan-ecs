@@ -298,21 +298,18 @@ func TestNewCoordinator(t *testing.T) {
 	coord := NewCoordinator(100)
 
 	// Register all components
-	RegisterNewComponentType[Transform](coord)
-	RegisterNewComponentType[Vec2](coord)
+	transId := RegisterNewComponentType[Transform](coord)
+	vecId := RegisterNewComponentType[Vec2](coord)
 
 	sys1 := DummySystemA{Entities: make([]Entity, 0)}
 	sys2 := DummySystemB{Entities: make([]Entity, 0)}
 	RegisterNewSystem(coord, &sys1)
 	RegisterNewSystem(coord, &sys2)
 
-	sys1Sig := NewSignature()
-	sys1Sig.Set(int(GetComponentType[Transform](coord)))
-	sys1Sig.Set(int(GetComponentType[Vec2](coord)))
+	sys1Sig := NewSignature().Set(transId, vecId)
 	SetSystemSignature(coord, &sys1, sys1Sig)
 
-	sys2Sig := NewSignature()
-	sys2Sig.Set(int(GetComponentType[Vec2](coord)))
+	sys2Sig := NewSignature().Set(vecId)
 	SetSystemSignature(coord, &sys2, sys2Sig)
 
 	ent1 := CreateNewEntity(coord)

@@ -19,10 +19,11 @@ func (sig *Signature) Contains(sig2 *Signature) bool {
 	return (*bit.Set)(sig).And((*bit.Set)(sig2)).Equal((*bit.Set)(sig))
 }
 
-func (sig *Signature) Set(pos ...int) {
+func (sig *Signature) Set(pos ...int) *Signature {
 	for _, id := range pos {
 		(*bit.Set)(sig).Add(id)
 	}
+	return sig
 }
 
 func (sig *Signature) Unset(pos ...int) {

@@ -95,7 +95,7 @@ func newComponentManager() *ComponentManager {
 	}
 }
 
-func registerComponent[T any](cm *ComponentManager) {
+func registerComponent[T any](cm *ComponentManager) int {
 	t := reflect.TypeOf((*T)(nil)).Elem()
 	name := t.Name()
 
@@ -110,6 +110,8 @@ func registerComponent[T any](cm *ComponentManager) {
 	cm.componentArrays[name] = compArray
 
 	cm.nextComponentType++
+
+	return int(cm.nextComponentType) - 1
 }
 
 func getComponentType[T any](cm *ComponentManager) ComponentType {

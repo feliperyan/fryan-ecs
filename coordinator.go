@@ -24,8 +24,8 @@ func EraseEntity(coord *Coordinator, entity Entity) {
 	coord.sm.EntityDestroyed(entity)
 }
 
-func RegisterNewComponentType[T any](coord *Coordinator) {
-	registerComponent[T](coord.cm)
+func RegisterNewComponentType[T any](coord *Coordinator) int {
+	return registerComponent[T](coord.cm)
 }
 
 func AddNewComponent[T any](coord *Coordinator, entity Entity, comp T) {
