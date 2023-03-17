@@ -49,23 +49,34 @@ func (dsa *DummySystemB) RemoveEntity(entity Entity) {
 	}
 }
 
-func TestDumbSignature(t *testing.T) {
-	system1 := DumbSignature{false, true, false, true, false}
+func TestSignature(t *testing.T) {
 
-	entity1 := DumbSignature{false, true, false, true, false}
-	entity2 := DumbSignature{false, true, true, true, false}
-	entity3 := DumbSignature{false, false, false, true, false}
+	entity := NewSignature()
+	entity.Set(10, 4, 9, 2)
 
-	r1, _ := system1.Contains(entity1)
-	r2, _ := system1.Contains(entity2)
-	r3, _ := system1.Contains(entity3)
+	sys1 := NewSignature() // true
+	sys1.Set(10, 9)
 
-	if !r1 || !r2 {
-		t.Fatalf("Should both be true, got: %v and %v", r1, r2)
+	sys2 := NewSignature() // false
+	sys2.Set(13, 12)
+
+	sys3 := NewSignature() // true
+	sys3.Set(10, 4, 9, 2)
+
+	sys4 := NewSignature() // false
+	sys4.Set(10, 4, 9, 2, 5)
+
+	r1 := sys1.Contains(entity)
+	r2 := sys2.Contains(entity)
+	r3 := sys3.Contains(entity)
+	r4 := sys4.Contains(entity)
+
+	if !r1 || !r3 {
+		t.Fatalf("Should both be true, got: %v and %v", r1, r3)
 	}
 
-	if r3 {
-		t.Fatalf("Should both be false, got: %v", r3)
+	if r2 || r4 {
+		t.Fatalf("Should both be false, got: %v and %v", r2, r4)
 	}
 }
 
@@ -122,18 +133,20 @@ func TestEntityManager(t *testing.T) {
 		t.Fatalf("Wanted 1 | got %v", e3)
 	}
 
-	sig := make(DumbSignature, MAX_COMPONENTS)
-	sig.Set(0, true)
-
+	sig := NewSignature()
+	sig.Set(0)
 	entManager.SetSignature(e3, sig)
+
 	_sig := entManager.GetSignature(e3)
-	if _sig[0] != true {
+
+	if sig.Contains(_sig) != true {
 		t.Fatal("Wanted sig true | got false")
 	}
 
 	entManager.DestroyEntity(e3)
 	_sig = entManager.GetSignature(e3)
-	if _sig[0] != false {
+
+	if sig.Contains(_sig) != false {
 		t.Fatal("Wanted resetted sig false | got true")
 	}
 }
@@ -253,9 +266,10 @@ func TestComprehensive(t *testing.T) {
 
 	sys := DummySystemA{Entities: make([]Entity, 0)}
 	sm.RegisterSystem(&sys)
-	sysSig := make(DumbSignature, MAX_COMPONENTS)
-	sysSig.Set(int(getComponentType[Transform](cm)), true)
-	sysSig.Set(int(getComponentType[Vec2](cm)), true)
+
+	sysSig := NewSignature()
+	sysSig.Set(int(getComponentType[Transform](cm)))
+	sysSig.Set(int(getComponentType[Vec2](cm)))
 
 	sm.SetSignature(&sys, sysSig)
 
@@ -272,8 +286,8 @@ func TestComprehensive(t *testing.T) {
 	addComponent(cm, ent1, vec)
 
 	sig := em.GetSignature(ent1)
-	sig.Set(int(getComponentType[Transform](cm)), true)
-	sig.Set(int(getComponentType[Vec2](cm)), true)
+	sig.Set(int(getComponentType[Transform](cm)))
+	sig.Set(int(getComponentType[Vec2](cm)))
 
 	em.SetSignature(ent1, sig)
 	sm.EntitySignatureChanged(ent1, sig)
@@ -292,13 +306,13 @@ func TestNewCoordinator(t *testing.T) {
 	RegisterNewSystem(coord, &sys1)
 	RegisterNewSystem(coord, &sys2)
 
-	sys1Sig := make(DumbSignature, MAX_COMPONENTS)
-	sys1Sig.Set(int(GetComponentType[Transform](coord)), true)
-	sys1Sig.Set(int(GetComponentType[Vec2](coord)), true)
+	sys1Sig := NewSignature()
+	sys1Sig.Set(int(GetComponentType[Transform](coord)))
+	sys1Sig.Set(int(GetComponentType[Vec2](coord)))
 	SetSystemSignature(coord, &sys1, sys1Sig)
 
-	sys2Sig := make(DumbSignature, MAX_COMPONENTS)
-	sys2Sig.Set(int(GetComponentType[Vec2](coord)), true)
+	sys2Sig := NewSignature()
+	sys2Sig.Set(int(GetComponentType[Vec2](coord)))
 	SetSystemSignature(coord, &sys2, sys2Sig)
 
 	ent1 := CreateNewEntity(coord)

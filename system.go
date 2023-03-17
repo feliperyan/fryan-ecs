@@ -1,7 +1,6 @@
 package ecs_cpp_style
 
 import (
-	"fmt"
 	"reflect"
 )
 
@@ -11,14 +10,14 @@ type System interface {
 }
 
 type SystemManager struct {
-	SystemSignatures map[string]DumbSignature
+	SystemSignatures map[string]*Signature
 	Systems          map[string]System
 }
 
 func NewSystemManager() *SystemManager {
 	return &SystemManager{
-		SystemSignatures: map[string]DumbSignature{},
-		Systems:          map[string]System{},
+		SystemSignatures: make(map[string]*Signature),
+		Systems:          make(map[string]System),
 	}
 }
 
@@ -28,21 +27,18 @@ func (sm *SystemManager) RegisterSystem(sys System) {
 	sm.Systems[name] = sys
 }
 
-func (sm *SystemManager) SetSignature(sys System, signature DumbSignature) {
+func (sm *SystemManager) SetSignature(sys System, signature *Signature) {
 	t := reflect.TypeOf(sys).Elem()
 	name := t.Name()
 	sm.SystemSignatures[name] = signature
 }
 
-func (sm *SystemManager) EntitySignatureChanged(entity Entity, signature DumbSignature) {
+func (sm *SystemManager) EntitySignatureChanged(entity Entity, signature *Signature) {
 	for sysType, system := range sm.Systems {
 
 		sysSig := sm.SystemSignatures[sysType]
 
-		ok, err := sysSig.Contains(signature)
-		if err != nil {
-			panic(fmt.Sprintf("Issue with signatures: %v", err))
-		}
+		ok := sysSig.Contains(signature)
 
 		if ok {
 			system.AddEntity(entity)

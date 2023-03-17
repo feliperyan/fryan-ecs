@@ -1,12 +1,39 @@
 package ecs_cpp_style
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/yourbasic/bit"
+)
 
 const MAX_ENTITIES int = 5000
 const MAX_COMPONENTS uint8 = 32
 
+type Signature bit.Set
+
+func NewSignature() *Signature {
+	return (*Signature)(bit.New())
+}
+
+func (sig *Signature) Contains(sig2 *Signature) bool {
+	return (*bit.Set)(sig).And((*bit.Set)(sig2)).Equal((*bit.Set)(sig))
+}
+
+func (sig *Signature) Set(pos ...int) {
+	for _, id := range pos {
+		(*bit.Set)(sig).Add(id)
+	}
+}
+
+func (sig *Signature) Unset(pos ...int) {
+	for _, id := range pos {
+		(*bit.Set)(sig).Delete(id)
+	}
+}
+
 // -------
 
+// DumbSignature no longer used. Remains in place in case of a future bug.
 type DumbSignature []bool
 
 func (s DumbSignature) Set(pos int, val bool) error {
@@ -39,11 +66,9 @@ func (s DumbSignature) Contains(s2 DumbSignature) (bool, error) {
 }
 
 func (s DumbSignature) Reset() {
-
 	for i, _ := range s {
 		s[i] = false
 	}
-
 }
 
 // -------

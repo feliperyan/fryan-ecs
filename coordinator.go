@@ -31,8 +31,10 @@ func RegisterNewComponentType[T any](coord *Coordinator) {
 func AddNewComponent[T any](coord *Coordinator, entity Entity, comp T) {
 	addComponent(coord.cm, entity, comp)
 
-	sig := coord.em.GetSignature(entity) //
-	sig.Set(int(getComponentType[T](coord.cm)), true)
+	sig := coord.em.GetSignature(entity)
+
+	sig.Set(int(getComponentType[T](coord.cm)))
+
 	coord.em.SetSignature(entity, sig)
 
 	coord.sm.EntitySignatureChanged(entity, sig)
@@ -42,7 +44,7 @@ func RemoveExistingComponent[T any](coord *Coordinator, entity Entity) {
 	removeComponent[T](coord.cm, entity)
 
 	sig := coord.em.GetSignature(entity) //
-	sig.Set(int(getComponentType[T](coord.cm)), false)
+	sig.Unset(int(getComponentType[T](coord.cm)))
 	coord.em.SetSignature(entity, sig)
 
 	coord.sm.EntitySignatureChanged(entity, sig)
@@ -62,7 +64,7 @@ func RegisterNewSystem(coord *Coordinator, system System) {
 	coord.sm.RegisterSystem(system)
 }
 
-func SetSystemSignature(coord *Coordinator, system System, sig DumbSignature) {
+func SetSystemSignature(coord *Coordinator, system System, sig *Signature) {
 	coord.sm.SetSignature(system, sig)
 }
 
