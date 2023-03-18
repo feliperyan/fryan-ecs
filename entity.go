@@ -46,7 +46,7 @@ func (em *EntityManager) DestroyEntity(entity Entity) {
 		panic("out of range")
 	}
 
-	em.signatures[entity] = NewSignature() // TODO: should reset this to nil
+	em.signatures[entity] = NewSignature() // TODO: should reset this to nil?
 	em.availableEntities.enqueue(entity)
 	em.entityCount--
 }

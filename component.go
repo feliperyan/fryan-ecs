@@ -127,7 +127,6 @@ func addComponent[T any](cm *ComponentManager, entity Entity, component T) {
 
 	array := cm.componentArrays[name]
 	array.(*ComponentArray[T]).Insert(entity, component)
-
 }
 
 func removeComponent[T any](cm *ComponentManager, entity Entity) {
@@ -136,7 +135,6 @@ func removeComponent[T any](cm *ComponentManager, entity Entity) {
 
 	array := cm.componentArrays[name]
 	array.(*ComponentArray[T]).remove(entity)
-
 }
 
 func getComponent[T any](cm *ComponentManager, entity Entity) (*T, error) {

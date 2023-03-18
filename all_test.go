@@ -335,7 +335,7 @@ func TestNewCoordinator(t *testing.T) {
 		fmt.Println("trans ", trans, " vec ", vec)
 	}
 
-	transArray := coord.cm.componentArrays["Transform"].(*ComponentArray[Transform])
+	transArray := GetComponentArrayForComponentType[Transform](coord)
 	for ent := range sys1.Entities {
 		idx := transArray.EntityToIndex[Entity(ent)]
 
