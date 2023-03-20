@@ -55,12 +55,12 @@ func (em *EntityManager) SetSignature(entity Entity, signature *Signature) {
 	if int(entity) > em.max_ents {
 		panic("out of range")
 	}
-
-	if em.signatures[entity] == nil {
-		em.signatures[entity] = NewSignature()
+	internalIndex := entity - 1
+	if em.signatures[internalIndex] == nil {
+		em.signatures[internalIndex] = NewSignature()
 	}
 
-	em.signatures[entity] = signature
+	em.signatures[internalIndex] = signature
 }
 
 func (em *EntityManager) GetSignature(entity Entity) *Signature {
@@ -68,9 +68,11 @@ func (em *EntityManager) GetSignature(entity Entity) *Signature {
 		panic("out of range")
 	}
 
-	if em.signatures[entity] == nil {
-		em.signatures[entity] = NewSignature()
+	internalIndex := entity - 1
+
+	if em.signatures[internalIndex] == nil {
+		em.signatures[internalIndex] = NewSignature()
 	}
 
-	return em.signatures[entity]
+	return em.signatures[internalIndex]
 }
