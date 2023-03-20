@@ -125,7 +125,10 @@ func addComponent[T any](cm *ComponentManager, entity Entity, component T) {
 	t := reflect.TypeOf((*T)(nil)).Elem()
 	name := t.Name()
 
-	array := cm.componentArrays[name]
+	array, ok := cm.componentArrays[name]
+	if !ok {
+		panic("addComponent can't add to a Component which has not been registered")
+	}
 	array.(*ComponentArray[T]).Insert(entity, component)
 }
 

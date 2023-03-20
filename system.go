@@ -38,6 +38,7 @@ func (sm *SystemManager) EntitySignatureChanged(entity Entity, signature *Signat
 
 		sysSig := sm.SystemSignatures[sysType]
 
+		// ok := signature.Contains(sysSig)
 		ok := sysSig.Contains(signature)
 
 		if ok {

@@ -80,6 +80,14 @@ func GetComponentArrayForComponentType[T any](coord *Coordinator) *ComponentArra
 	t := reflect.TypeOf((*T)(nil)).Elem()
 	name := t.Name()
 
-	return coord.cm.componentArrays[name].(*ComponentArray[T])
+	list, ok := coord.cm.componentArrays[name]
+	if !ok {
+		panic("Component Manager has no array for that component")
+	}
 
+	return list.(*ComponentArray[T])
+}
+
+func GetEntitySignature(coord *Coordinator, ent Entity) *Signature {
+	return coord.em.GetSignature(ent)
 }
