@@ -110,8 +110,8 @@ func TestEntityManager(t *testing.T) {
 	e0 := entManager.CreateEntity()
 	e1 := entManager.CreateEntity()
 
-	wantOne := 0
-	wantTwo := 1
+	wantOne := 1
+	wantTwo := 2
 
 	if Entity(wantOne) != e0 {
 		t.Fatalf("Wanted %v | got %v", wantOne, e0)
@@ -126,8 +126,8 @@ func TestEntityManager(t *testing.T) {
 	e2 := entManager.CreateEntity()
 	e3 := entManager.CreateEntity()
 
-	if e2 != 2 {
-		t.Fatalf("Wanted 2 | got %v", e2)
+	if e2 != 3 {
+		t.Fatalf("Wanted 3 | got %v", e2)
 	}
 	if e3 != 1 {
 		t.Fatalf("Wanted 1 | got %v", e3)

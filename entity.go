@@ -20,7 +20,7 @@ func NewEntityManager(max_ents int) *EntityManager {
 		max_ents:          max_ents,
 	}
 
-	for i := 0; i < max_ents; i++ {
+	for i := 1; i <= max_ents; i++ {
 		em.availableEntities.enqueue(Entity(i))
 	}
 
