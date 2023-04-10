@@ -91,7 +91,7 @@ func newComponentManager() *ComponentManager {
 	return &ComponentManager{
 		componentTypes:    make(map[string]ComponentType),
 		componentArrays:   make(map[string]IComponentArray),
-		nextComponentType: 0,
+		nextComponentType: 1,
 	}
 }
 

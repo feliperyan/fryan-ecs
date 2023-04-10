@@ -7,6 +7,7 @@ import (
 type System interface {
 	AddEntity(entity Entity)
 	RemoveEntity(entity Entity)
+	HasEntity(entity Entity) bool
 }
 
 type SystemManager struct {
@@ -15,6 +16,7 @@ type SystemManager struct {
 }
 
 func NewSystemManager() *SystemManager {
+
 	return &SystemManager{
 		SystemSignatures: make(map[string]*Signature),
 		Systems:          make(map[string]System),
@@ -42,7 +44,9 @@ func (sm *SystemManager) EntitySignatureChanged(entity Entity, signature *Signat
 		ok := sysSig.Contains(signature)
 
 		if ok {
-			system.AddEntity(entity)
+			if !system.HasEntity(entity) {
+				system.AddEntity(entity)
+			}
 		} else {
 			system.RemoveEntity(entity)
 		}

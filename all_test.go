@@ -5,47 +5,73 @@ import (
 	"testing"
 )
 
-type DummySystemA struct {
+type SystemCommon struct {
 	Entities []Entity
 }
 
-func (dsa *DummySystemA) AddEntity(entity Entity) {
-	dsa.Entities = append(dsa.Entities, entity)
+func (sys *SystemCommon) AddEntity(entity Entity) {
+	sys.Entities = append(sys.Entities, entity)
 }
-
-func (dsa *DummySystemA) RemoveEntity(entity Entity) {
+func (sys *SystemCommon) RemoveEntity(entity Entity) {
 	pos := -1
-	for i, ent := range dsa.Entities {
+	for i, ent := range sys.Entities {
 		if ent == entity {
 			pos = i
 			break
 		}
 	}
 	if pos >= 0 {
-		dsa.Entities[pos] = dsa.Entities[len(dsa.Entities)-1]
-		dsa.Entities = dsa.Entities[:len(dsa.Entities)-1]
+		sys.Entities[pos] = sys.Entities[len(sys.Entities)-1]
+		sys.Entities = sys.Entities[:len(sys.Entities)-1]
 	}
+}
+func (sys *SystemCommon) HasEntity(entity Entity) bool {
+	for _, ent := range sys.Entities {
+		if ent == entity {
+			return true
+		}
+	}
+	return false
+}
+
+type DummySystemA struct {
+	SystemCommon
 }
 
 type DummySystemB struct {
-	Entities []Entity
+	SystemCommon
 }
 
-func (dsa *DummySystemB) AddEntity(entity Entity) {
-	dsa.Entities = append(dsa.Entities, entity)
-}
-
-func (dsa *DummySystemB) RemoveEntity(entity Entity) {
-	pos := -1
-	for i, ent := range dsa.Entities {
-		if ent == entity {
-			pos = i
-			break
-		}
+func TestAddNewComponent(t *testing.T) {
+	coord := NewCoordinator(10)
+	s1 := &DummySystemA{
+		SystemCommon{Entities: make([]Entity, 0)},
 	}
-	if pos >= 0 {
-		dsa.Entities[pos] = dsa.Entities[len(dsa.Entities)-1]
-		dsa.Entities = dsa.Entities[:len(dsa.Entities)-1]
+	s2 := &DummySystemB{
+		SystemCommon{Entities: make([]Entity, 0)},
+	}
+
+	RegisterNewComponentType[Transform](coord)
+	RegisterNewComponentType[Vec2](coord)
+
+	RegisterNewSystem(coord, s1)
+	RegisterNewSystem(coord, s2)
+
+	sig1 := NewSignature()
+	sig1.Set(int(GetComponentType[Transform](coord)))
+	SetSystemSignature(coord, s1, sig1)
+
+	sig2 := NewSignature()
+	sig2.Set(int(GetComponentType[Transform](coord)))
+	sig2.Set(int(GetComponentType[Vec2](coord)))
+	SetSystemSignature(coord, s2, sig2)
+
+	e1 := CreateNewEntity(coord)
+	AddNewComponent(coord, e1, Transform{})
+	AddNewComponent(coord, e1, Vec2{})
+
+	if len(s1.Entities) > 1 {
+		t.Fatalf("Expected <= 1 , got %v", len(s1.Entities))
 	}
 }
 
@@ -133,22 +159,30 @@ func TestEntityManager(t *testing.T) {
 		t.Fatalf("Wanted 1 | got %v", e3)
 	}
 
-	sig := NewSignature()
-	sig.Set(0)
-	entManager.SetSignature(e3, sig)
+}
 
-	_sig := entManager.GetSignature(e3)
+func TestEntityManagerSignatures(t *testing.T) {
+
+	entManager := NewEntityManager(5)
+	e1 := entManager.CreateEntity()
+
+	sig := NewSignature()
+	sig.Set(10)
+	entManager.SetSignature(e1, sig)
+
+	_sig := entManager.GetSignature(e1)
 
 	if sig.Contains(_sig) != true {
 		t.Fatal("Wanted sig true | got false")
 	}
 
-	entManager.DestroyEntity(e3)
-	_sig = entManager.GetSignature(e3)
+	entManager.DestroyEntity(e1)
+	_sig = entManager.GetSignature(e1)
 
-	if sig.Contains(_sig) != false {
-		t.Fatal("Wanted resetted sig false | got true")
+	if _sig != nil {
+		t.Fatal("Wanted resetted sig false | got something else")
 	}
+
 }
 
 func TestComponentArray(t *testing.T) {
@@ -194,8 +228,8 @@ func TestComponentManager(t *testing.T) {
 
 	tp := getComponentType[DummyComponentB](cm)
 
-	if tp != 1 {
-		t.Fatalf("Wanted 1, got %v", tp)
+	if tp != 2 {
+		t.Fatalf("Wanted 2, got %v", tp)
 	}
 
 	entManager := NewEntityManager(3)
@@ -264,7 +298,9 @@ func TestComprehensive(t *testing.T) {
 	registerComponent[Transform](cm)
 	registerComponent[Vec2](cm)
 
-	sys := DummySystemA{Entities: make([]Entity, 0)}
+	sys := DummySystemA{
+		SystemCommon{Entities: make([]Entity, 0)},
+	}
 	sm.RegisterSystem(&sys)
 
 	sysSig := NewSignature()
@@ -301,8 +337,12 @@ func TestNewCoordinator(t *testing.T) {
 	transId := RegisterNewComponentType[Transform](coord)
 	vecId := RegisterNewComponentType[Vec2](coord)
 
-	sys1 := DummySystemA{Entities: make([]Entity, 0)}
-	sys2 := DummySystemB{Entities: make([]Entity, 0)}
+	sys1 := DummySystemA{
+		SystemCommon{Entities: make([]Entity, 0)},
+	}
+	sys2 := DummySystemB{
+		SystemCommon{Entities: make([]Entity, 0)},
+	}
 	RegisterNewSystem(coord, &sys1)
 	RegisterNewSystem(coord, &sys2)
 

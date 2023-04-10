@@ -46,7 +46,9 @@ func (em *EntityManager) DestroyEntity(entity Entity) {
 		panic("out of range")
 	}
 
-	em.signatures[entity] = NewSignature() // TODO: should reset this to nil?
+	internalEntityIndex := entity - 1
+
+	em.signatures[internalEntityIndex] = nil // TODO: should reset this to nil?
 	em.availableEntities.enqueue(entity)
 	em.entityCount--
 }
@@ -70,9 +72,9 @@ func (em *EntityManager) GetSignature(entity Entity) *Signature {
 
 	internalIndex := entity - 1
 
-	if em.signatures[internalIndex] == nil {
-		em.signatures[internalIndex] = NewSignature()
-	}
+	//if em.signatures[internalIndex] == nil {
+	//	em.signatures[internalIndex] = NewSignature()
+	//}
 
 	return em.signatures[internalIndex]
 }

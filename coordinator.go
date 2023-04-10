@@ -8,6 +8,10 @@ type Coordinator struct {
 	cm *ComponentManager
 }
 
+func GetTotalEntities(coord *Coordinator) int {
+	return coord.em.entityCount
+}
+
 func NewCoordinator(ents int) *Coordinator {
 	return &Coordinator{
 		em: NewEntityManager(ents),
@@ -37,6 +41,9 @@ func AddNewComponent[T any](coord *Coordinator, entity Entity, comp T) {
 
 	// Updates the Entity archetype
 	sig := coord.em.GetSignature(entity)
+	if sig == nil {
+		sig = NewSignature()
+	}
 	sig.Set(int(getComponentType[T](coord.cm)))
 	coord.em.SetSignature(entity, sig)
 
