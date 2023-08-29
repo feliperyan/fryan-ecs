@@ -37,11 +37,11 @@ func (sys *SystemCommon) HasEntity(entity Entity) bool {
 type DummySystemA struct {
 	SystemCommon
 }
-
 type DummySystemB struct {
 	SystemCommon
 }
 
+// TESTS
 func TestAddNewComponent(t *testing.T) {
 	coord := NewCoordinator(10)
 	s1 := &DummySystemA{
@@ -321,7 +321,7 @@ func TestComprehensive(t *testing.T) {
 	addComponent(cm, ent1, transf)
 	addComponent(cm, ent1, vec)
 
-	sig := em.GetSignature(ent1)
+	sig := NewSignature()
 	sig.Set(int(getComponentType[Transform](cm)))
 	sig.Set(int(getComponentType[Vec2](cm)))
 
