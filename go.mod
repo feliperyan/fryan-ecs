@@ -1,4 +1,4 @@
-module ecs-cpp-style
+module ecs-2023
 
 go 1.18
 
