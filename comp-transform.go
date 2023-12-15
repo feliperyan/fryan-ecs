@@ -1,4 +1,4 @@
-package ecs_cpp_style
+package ECSCppStyle
 
 type Vec2 struct {
 	X int
