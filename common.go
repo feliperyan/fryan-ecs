@@ -6,9 +6,6 @@ import (
 	"github.com/yourbasic/bit"
 )
 
-const MAX_ENTITIES int = 5000
-const MAX_COMPONENTS uint8 = 32
-
 type Signature bit.Set
 
 func NewSignature() *Signature {
